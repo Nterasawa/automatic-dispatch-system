@@ -10,11 +10,13 @@ const app = express();
 const DATA_DIR = path.join(__dirname, '../../data');
 const EVENTS_FILE = path.join(DATA_DIR, 'events.json');
 
-// CORSの設定
-app.use(cors());
+app.use(cors({
+  origin: true,
+  credentials: true
+}));
 app.use(express.json());
+app.use(express.static('dist'));
 
-// データディレクトリとファイルの初期化
 const initDataDir = async () => {
   try {
     await fs.mkdir(DATA_DIR, { recursive: true });
@@ -38,6 +40,7 @@ app.get('/api/health', async (req, res) => {
     }
     res.json({ status: 'ok' });
   } catch (error) {
+    console.error('Health check error:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -66,9 +69,9 @@ app.post('/api/events', async (req, res) => {
   }
 });
 
-// サーバーの起動前にデータディレクトリを初期化
 await initDataDir();
 
-app.listen(3000, '0.0.0.0', () => {
-  console.log('Server running on port 3000');
+const port = process.env.PORT || 3000;
+app.listen(port, '0.0.0.0', () => {
+  console.log(`Server running on port ${port}`);
 });

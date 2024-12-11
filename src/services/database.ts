@@ -1,8 +1,16 @@
 
 import axios from 'axios';
 
+const BASE_URL = window.location.hostname.includes('repl.co') 
+  ? `https://${window.location.hostname}`
+  : 'http://0.0.0.0:3000';
+
 const api = axios.create({
-  baseURL: 'http://0.0.0.0:3000'
+  baseURL: BASE_URL,
+  timeout: 5000,
+  headers: {
+    'Content-Type': 'application/json',
+  }
 });
 
 export class DatabaseService {
@@ -12,9 +20,10 @@ export class DatabaseService {
       if (response.data.status !== 'ok') {
         throw new Error('Database initialization failed');
       }
+      return true;
     } catch (error) {
       console.error('Database initialization error:', error);
-      throw new Error('Database initialization failed');
+      throw error;
     }
   }
 
