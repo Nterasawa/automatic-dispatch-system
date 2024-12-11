@@ -6,17 +6,12 @@ const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const DATA_DIR = path.join(__dirname, 'data');
-const DATA_FILE = path.join(DATA_DIR, 'events.json');
 
 app.use(cors());
 app.use(express.json());
 
-// エラーハンドリングミドルウェア
-app.use((err, req, res, next) => {
-  console.error('Server error:', err);
-  res.status(500).json({ error: err.message || 'Internal server error' });
-});
+const DATA_DIR = path.join(__dirname, 'data');
+const DATA_FILE = path.join(DATA_DIR, 'events.json');
 
 async function initializeStorage() {
   try {
@@ -26,7 +21,6 @@ async function initializeStorage() {
     } catch {
       await fs.writeFile(DATA_FILE, '[]', 'utf8');
     }
-    console.log('Storage initialized successfully');
     return true;
   } catch (error) {
     console.error('Storage initialization failed:', error);
@@ -36,23 +30,22 @@ async function initializeStorage() {
 
 app.post('/api/initialize', async (req, res) => {
   try {
-    const success = await initializeStorage();
-    if (!success) {
-      throw new Error('Failed to initialize storage');
-    }
+    await initializeStorage();
     res.json({ success: true });
   } catch (error) {
+    console.error('Initialization error:', error);
     res.status(500).json({ error: error.message });
   }
 });
 
 app.get('/api/events', async (req, res) => {
   try {
+    await initializeStorage();
     const data = await fs.readFile(DATA_FILE, 'utf8');
     res.json(JSON.parse(data));
   } catch (error) {
     console.error('Get events error:', error);
-    res.status(500).json({ error: 'Failed to get events' });
+    res.status(500).json({ error: error.message });
   }
 });
 
@@ -69,11 +62,11 @@ app.post('/api/events', async (req, res) => {
     const events = JSON.parse(data);
     events.push(event);
     
-    await fs.writeFile(DATA_FILE, JSON.stringify(events, null, 2), 'utf8');
+    await fs.writeFile(DATA_FILE, JSON.stringify(events, null, 2));
     res.status(201).json(event);
   } catch (error) {
     console.error('Save event error:', error);
-    res.status(500).json({ error: 'Failed to save event' });
+    res.status(500).json({ error: error.message });
   }
 });
 
