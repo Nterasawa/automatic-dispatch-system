@@ -1,12 +1,18 @@
 
 const express = require('express');
 const cors = require('cors');
+const crypto = require('crypto');
 const app = express();
 const port = 3001;
 
 let events = [];
 
-app.use(cors());
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type']
+}));
+
 app.use(express.json());
 
 app.get('/api/events', (req, res) => {
@@ -39,5 +45,5 @@ app.delete('/api/events/:id', (req, res) => {
 });
 
 app.listen(port, '0.0.0.0', () => {
-  console.log(`Server running on port ${port}`);
+  console.log(`Server running at http://0.0.0.0:${port}`);
 });
