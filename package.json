@@ -1,35 +1,30 @@
+
 {
-  "name": "eagles-car-arrangement",
+  "name": "eagles-attendance-system",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "start": "node server.js",
     "build": "tsc && vite build",
-    "preview": "vite preview",
-    "concurrently": "^8.2.0"
+    "preview": "vite preview"
   },
   "dependencies": {
-    "@heroicons/react": "^2.2.0",
-    "@replit/database": "^3.0.0",
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.7",
-    "express": "^4.21.2",
-    "node-fetch": "^2.7.0",
+    "@heroicons/react": "^2.0.18",
+    "@replit/database": "^2.0.5",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-router-dom": "^6.0.0",
-    "concurrently": "^8.2.0"
+    "react-router-dom": "^6.10.0",
+    "react-toastify": "^9.1.3"
   },
   "devDependencies": {
-    "@types/react": "^18.0.0",
-    "@types/react-dom": "^18.0.0",
-    "@vitejs/plugin-react": "^2.0.0",
-    "autoprefixer": "^10.4.0",
-    "postcss": "^8.4.0",
-    "tailwindcss": "^3.0.0",
-    "typescript": "^4.6.0",
-    "vite": "^3.0.0"
+    "@types/react": "^18.0.28",
+    "@types/react-dom": "^18.0.11",
+    "@vitejs/plugin-react": "^3.1.0",
+    "autoprefixer": "^10.4.14",
+    "postcss": "^8.4.21",
+    "tailwindcss": "^3.3.1",
+    "typescript": "^4.9.3",
+    "vite": "^4.2.0"
   }
 }
