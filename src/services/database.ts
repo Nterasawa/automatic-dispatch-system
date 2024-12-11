@@ -30,18 +30,25 @@ export class DatabaseService {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json'
         },
         body: JSON.stringify(event),
         credentials: 'include'
       });
       
-      const data = await response.json();
-      
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to save event');
+        const text = await response.text();
+        let error;
+        try {
+          const data = JSON.parse(text);
+          error = data.error;
+        } catch {
+          error = text;
+        }
+        throw new Error(error || 'Failed to save event');
       }
 
-      return data;
+      return await response.json();
     } catch (error) {
       console.error('Save event error:', error);
       throw error;

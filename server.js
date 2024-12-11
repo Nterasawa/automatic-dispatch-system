@@ -7,12 +7,15 @@ const port = 3000;
 
 let events = [];
 
-app.use(cors());
+app.use(cors({
+  origin: true,
+  credentials: true
+}));
 app.use(express.json());
-app.use(express.static('dist'));
 
 app.get('/api/events', (req, res) => {
-  res.json(events);
+  res.setHeader('Content-Type', 'application/json');
+  res.json(events || []);
 });
 
 app.post('/api/events', (req, res) => {
