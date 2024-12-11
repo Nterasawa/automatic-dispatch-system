@@ -2,9 +2,7 @@
 import { Event } from '../types/event';
 import { AttendanceData } from '../types/attendance';
 
-const API_BASE_URL = window.location.hostname.includes('replit') 
-  ? `${window.location.protocol}//${window.location.hostname}/api`
-  : 'http://0.0.0.0:3000/api';
+const API_BASE_URL = '/api';
 
 export class DatabaseService {
   static async initializeDatabase() {
@@ -29,7 +27,7 @@ export class DatabaseService {
       return await response.json();
     } catch (error) {
       console.error('Get events error:', error);
-      throw error;
+      return [];
     }
   }
 
@@ -65,19 +63,6 @@ export class DatabaseService {
       }
     } catch (error) {
       console.error('Delete event error:', error);
-      throw error;
-    }
-  }
-
-  static async getAttendances(eventId: string): Promise<AttendanceData[]> {
-    try {
-      const response = await fetch(`${API_BASE_URL}/events/${eventId}/attendances`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch attendances');
-      }
-      return await response.json();
-    } catch (error) {
-      console.error('Get attendances error:', error);
       throw error;
     }
   }

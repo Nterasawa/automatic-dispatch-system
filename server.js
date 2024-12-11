@@ -4,7 +4,7 @@ const cors = require('cors');
 const Database = require('@replit/database');
 
 const app = express();
-const db = new Database(process.env.REPLIT_DB_URL);
+const db = new Database();
 
 app.use(cors({
   origin: '*',
@@ -30,10 +30,7 @@ app.get('/api/events', async (req, res) => {
 app.post('/api/events', async (req, res) => {
   try {
     const events = await db.get('events') || [];
-    const newEvent = {
-      ...req.body,
-      id: `event-${Date.now()}`
-    };
+    const newEvent = req.body;
     events.push(newEvent);
     await db.set('events', events);
     res.status(201).json(newEvent);
