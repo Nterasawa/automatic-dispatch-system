@@ -17,13 +17,20 @@ app.get('/api/events', (req, res) => {
 
 app.post('/api/events', (req, res) => {
   try {
+    if (!req.body.title || !req.body.date) {
+      return res.status(400).json({ error: 'Title and date are required' });
+    }
+    
     const event = {
       ...req.body,
-      id: crypto.randomUUID()
+      id: crypto.randomUUID(),
+      attendees: 0,
+      cars: 0
     };
     events.push(event);
     res.status(201).json(event);
   } catch (error) {
+    console.error('Create event error:', error);
     res.status(500).json({ error: 'Failed to create event' });
   }
 });

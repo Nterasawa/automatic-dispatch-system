@@ -32,12 +32,19 @@ export class DatabaseService {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(event),
+        credentials: 'include'
       });
-      if (!response.ok) throw new Error('Failed to save event');
-      return await response.json();
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to save event');
+      }
+
+      return data;
     } catch (error) {
-      console.error('イベント保存エラー:', error);
-      throw new Error('Failed to save event');
+      console.error('Save event error:', error);
+      throw error;
     }
   }
 
