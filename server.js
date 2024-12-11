@@ -59,6 +59,51 @@ app.post('/api/events', async (req, res) => {
   }
 });
 
+// 出欠情報の保存
+app.post('/api/events/:eventId/attendances', async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const attendanceData = req.body;
+    const attendancesPath = path.join(DATA_DIR, `${eventId}_attendances.json`);
+    
+    let attendances = [];
+    try {
+      const data = await fs.readFile(attendancesPath, 'utf8');
+      attendances = JSON.parse(data);
+    } catch (error) {
+      // ファイルが存在しない場合は空の配列を使用
+    }
+    
+    attendances.push(attendanceData);
+    await fs.writeFile(attendancesPath, JSON.stringify(attendances, null, 2));
+    res.json(attendanceData);
+  } catch (error) {
+    console.error('出欠保存エラー:', error);
+    res.status(500).json({ error: '出欠の保存に失敗しました' });
+  }
+});
+
+// 出欠情報の取得
+app.get('/api/events/:eventId/attendances', async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const attendancesPath = path.join(DATA_DIR, `${eventId}_attendances.json`);
+    
+    let attendances = [];
+    try {
+      const data = await fs.readFile(attendancesPath, 'utf8');
+      attendances = JSON.parse(data);
+    } catch (error) {
+      // ファイルが存在しない場合は空の配列を返す
+    }
+    
+    res.json(attendances);
+  } catch (error) {
+    console.error('出欠取得エラー:', error);
+    res.status(500).json({ error: '出欠の取得に失敗しました' });
+  }
+});
+
 initializeDataFile().then((success) => {
   if (success) {
     app.listen(PORT, '0.0.0.0', () => {
