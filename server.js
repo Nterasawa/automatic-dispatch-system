@@ -1,8 +1,12 @@
 
-const express = require('express');
-const cors = require('cors');
-const fs = require('fs').promises;
-const path = require('path');
+import express from 'express';
+import cors from 'cors';
+import { promises as fs } from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = 3000;
@@ -12,7 +16,6 @@ const DATA_FILE = path.join(DATA_DIR, 'events.json');
 app.use(cors());
 app.use(express.json());
 
-// データファイルの初期化
 const initializeDataFile = async () => {
   try {
     await fs.mkdir(DATA_DIR, { recursive: true });
@@ -56,7 +59,6 @@ app.post('/api/events', async (req, res) => {
   }
 });
 
-// サーバー起動前にデータファイルを初期化
 initializeDataFile().then((success) => {
   if (success) {
     app.listen(PORT, '0.0.0.0', () => {
