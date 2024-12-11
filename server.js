@@ -10,16 +10,15 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('dist'));
 
-// データベース初期化
-const initializeDatabase = async () => {
+// データベース接続確認
+const checkDatabaseConnection = async () => {
   try {
-    const initialized = await db.get('initialized');
-    if (!initialized) {
-      await db.set('initialized', true);
-      await db.set('events', []);
-    }
+    await db.list();
+    console.log('Database connected successfully');
+    return true;
   } catch (error) {
-    console.error('Database initialization error:', error);
+    console.error('Database connection error:', error);
+    return false;
   }
 };
 
@@ -29,7 +28,7 @@ app.get('/api/events', async (req, res) => {
     res.json(events);
   } catch (error) {
     console.error('Get events error:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Failed to fetch events' });
   }
 });
 
@@ -42,7 +41,7 @@ app.post('/api/events', async (req, res) => {
     res.json(event);
   } catch (error) {
     console.error('Save event error:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Failed to save event' });
   }
 });
 
@@ -54,13 +53,19 @@ app.delete('/api/events/:id', async (req, res) => {
     res.json({ success: true });
   } catch (error) {
     console.error('Delete event error:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Failed to delete event' });
   }
 });
 
 const port = 3000;
-initializeDatabase().then(() => {
-  app.listen(port, '0.0.0.0', () => {
-    console.log(`Server running on port ${port}`);
-  });
+
+// サーバー起動前にデータベース接続を確認
+checkDatabaseConnection().then((isConnected) => {
+  if (isConnected) {
+    app.listen(port, '0.0.0.0', () => {
+      console.log(`Server running on port ${port}`);
+    });
+  } else {
+    console.error('Failed to start server due to database connection error');
+  }
 });
