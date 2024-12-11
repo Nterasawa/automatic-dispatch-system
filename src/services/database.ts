@@ -1,69 +1,38 @@
 
 import { Event } from '../types/event';
 import { AttendanceData } from '../types/attendance';
+import sqlite3 from 'sqlite3';
+import { open } from 'sqlite';
 
-const API_BASE_URL = '/api';
+const dbPromise = open({
+  filename: './data/events.db',
+  driver: sqlite3.Database
+});
 
 export class DatabaseService {
   static async initializeDatabase() {
-    try {
-      const response = await fetch(`${API_BASE_URL}/health`);
-      if (!response.ok) {
-        throw new Error('Server health check failed');
-      }
-      return await response.json();
-    } catch (error) {
-      console.error('Database initialization error:', error);
-      throw error;
-    }
+    const db = await dbPromise;
+    await db.exec(`
+      CREATE TABLE IF NOT EXISTS events (
+        id TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        date TEXT NOT NULL,
+        attendees INTEGER DEFAULT 0,
+        cars INTEGER DEFAULT 0
+      )
+    `);
   }
 
   static async getEvents(): Promise<Event[]> {
-    try {
-      const response = await fetch(`${API_BASE_URL}/events`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch events');
-      }
-      return await response.json();
-    } catch (error) {
-      console.error('Get events error:', error);
-      return [];
-    }
+    const db = await dbPromise;
+    return db.all('SELECT * FROM events ORDER BY date DESC');
   }
 
-  static async saveEvent(event: Event): Promise<Event> {
-    try {
-      const response = await fetch(`${API_BASE_URL}/events`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(event),
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to save event');
-      }
-      
-      return await response.json();
-    } catch (error) {
-      console.error('Save event error:', error);
-      throw error;
-    }
-  }
-
-  static async deleteEvent(id: string): Promise<void> {
-    try {
-      const response = await fetch(`${API_BASE_URL}/events/${id}`, {
-        method: 'DELETE',
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to delete event');
-      }
-    } catch (error) {
-      console.error('Delete event error:', error);
-      throw error;
-    }
+  static async saveEvent(event: Event): Promise<void> {
+    const db = await dbPromise;
+    await db.run(
+      'INSERT INTO events (id, title, date, attendees, cars) VALUES (?, ?, ?, ?, ?)',
+      [event.id, event.title, event.date, event.attendees, event.cars]
+    );
   }
 }
