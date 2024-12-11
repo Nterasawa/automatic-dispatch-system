@@ -9,39 +9,30 @@ let events = [];
 
 app.use(cors({
   origin: '*',
-  methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type']
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true,
+  optionsSuccessStatus: 200
 }));
 
 app.use(express.json());
 
 app.get('/api/events', (req, res) => {
-  try {
-    res.json(events);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch events' });
-  }
+  res.json(events);
 });
 
 app.post('/api/events', (req, res) => {
-  try {
-    const event = req.body;
-    event.id = event.id || crypto.randomUUID();
-    events.push(event);
-    res.status(201).json(event);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to create event' });
-  }
+  const event = {
+    ...req.body,
+    id: crypto.randomUUID()
+  };
+  events.push(event);
+  res.status(201).json(event);
 });
 
 app.delete('/api/events/:id', (req, res) => {
-  try {
-    const { id } = req.params;
-    events = events.filter(event => event.id !== id);
-    res.status(204).send();
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to delete event' });
-  }
+  const { id } = req.params;
+  events = events.filter(event => event.id !== id);
+  res.status(204).send();
 });
 
 app.listen(port, '0.0.0.0', () => {
