@@ -1,51 +1,35 @@
 
-export class DatabaseService {
-  private static baseUrl = '/api';
+import axios from 'axios';
 
+export class DatabaseService {
   static async initializeDatabase() {
     try {
-      const response = await fetch(`${this.baseUrl}/health`);
-      if (!response.ok) {
+      const response = await axios.get('/api/health');
+      if (response.data.status !== 'ok') {
         throw new Error('Database initialization failed');
       }
-      const data = await response.json();
-      return data;
     } catch (error) {
       console.error('Database initialization error:', error);
-      throw error;
+      throw new Error('Database initialization failed');
     }
   }
 
   static async getEvents() {
     try {
-      const response = await fetch(`${this.baseUrl}/events`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch events');
-      }
-      const data = await response.json();
-      return data;
+      const response = await axios.get('/api/events');
+      return response.data;
     } catch (error) {
       console.error('Get events error:', error);
-      return [];
+      throw error;
     }
   }
 
   static async saveEvent(event: any) {
     try {
-      const response = await fetch(`${this.baseUrl}/events`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(event),
-      });
-      if (!response.ok) {
-        throw new Error('Failed to save event');
-      }
-      const data = await response.json();
-      return data;
+      const response = await axios.post('/api/events', event);
+      return response.data;
     } catch (error) {
-      console.error('Event save error:', error);
+      console.error('Save event error:', error);
       throw error;
     }
   }

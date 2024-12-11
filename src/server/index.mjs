@@ -1,10 +1,14 @@
 
 import express from 'express';
 import cors from 'cors';
-import Database from '@replit/database';
+import fs from 'fs/promises';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
-const db = new Database();
+const DATA_DIR = path.join(__dirname, '../../data');
+const EVENTS_FILE = path.join(DATA_DIR, 'events.json');
 
 app.use(cors({
   origin: true,
@@ -14,20 +18,27 @@ app.use(cors({
 
 app.use(express.json());
 
-// ヘルスチェックエンドポイント
-app.get('/api/health', async (req, res) => {
+const initDataDir = async () => {
   try {
-    res.json({ status: 'ok' });
+    await fs.mkdir(DATA_DIR, { recursive: true });
+    try {
+      await fs.access(EVENTS_FILE);
+    } catch {
+      await fs.writeFile(EVENTS_FILE, '[]');
+    }
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('Init data dir error:', error);
   }
+};
+
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok' });
 });
 
-// イベント関連のエンドポイント
 app.get('/api/events', async (req, res) => {
   try {
-    const events = await db.get('events') || [];
-    res.json(events);
+    const data = await fs.readFile(EVENTS_FILE, 'utf8');
+    res.json(JSON.parse(data));
   } catch (error) {
     console.error('Get events error:', error);
     res.status(500).json({ error: error.message });
@@ -36,17 +47,18 @@ app.get('/api/events', async (req, res) => {
 
 app.post('/api/events', async (req, res) => {
   try {
-    const events = await db.get('events') || [];
+    const data = await fs.readFile(EVENTS_FILE, 'utf8');
+    const events = JSON.parse(data);
     events.push(req.body);
-    await db.set('events', events);
-    res.json(req.body);
+    await fs.writeFile(EVENTS_FILE, JSON.stringify(events, null, 2));
+    res.status(201).json(req.body);
   } catch (error) {
-    console.error('Save event error:', error);
+    console.error('Create event error:', error);
     res.status(500).json({ error: error.message });
   }
 });
 
-const port = 3000;
-app.listen(port, '0.0.0.0', () => {
-  console.log(`Server running on port ${port}`);
+await initDataDir();
+app.listen(3000, '0.0.0.0', () => {
+  console.log('Server running on port 3000');
 });
