@@ -7,7 +7,9 @@ const API_BASE_URL = '/api';
 export const DatabaseService = {
   async initializeDatabase(): Promise<void> {
     try {
-      const events = await this.getEvents();
+      const response = await fetch(`${API_BASE_URL}/events`);
+      const events = await response.json();
+      
       if (!events || events.length === 0) {
         const event: Event = {
           id: "event-" + Date.now(),
@@ -24,49 +26,113 @@ export const DatabaseService = {
   },
 
   async getEvents(): Promise<Event[]> {
-    const response = await fetch(`${API_BASE_URL}/events`);
-    return response.json();
+    try {
+      const response = await fetch(`${API_BASE_URL}/events`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch events');
+      }
+      return await response.json();
+    } catch (error) {
+      console.error("イベント取得エラー:", error);
+      return [];
+    }
   },
 
   async saveEvent(event: Event): Promise<void> {
-    await fetch(`${API_BASE_URL}/events`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(event)
-    });
+    try {
+      const response = await fetch(`${API_BASE_URL}/events`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(event),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to save event');
+      }
+    } catch (error) {
+      console.error("イベント保存エラー:", error);
+      throw error;
+    }
   },
 
   async getAttendances(eventId: string): Promise<AttendanceData[]> {
-    const response = await fetch(`${API_BASE_URL}/attendance/${eventId}`);
-    return response.json();
+    try {
+      const response = await fetch(`${API_BASE_URL}/attendance/${eventId}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch attendances');
+      }
+      return await response.json();
+    } catch (error) {
+      console.error("出席データ取得エラー:", error);
+      return [];
+    }
   },
 
   async saveAttendance(eventId: string, attendance: AttendanceData): Promise<void> {
-    await fetch(`${API_BASE_URL}/attendance/${eventId}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(attendance)
-    });
+    try {
+      const response = await fetch(`${API_BASE_URL}/attendance/${eventId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(attendance),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to save attendance');
+      }
+    } catch (error) {
+      console.error("出席データ保存エラー:", error);
+      throw error;
+    }
   },
 
   async updateAttendance(eventId: string, attendanceId: string, attendance: AttendanceData): Promise<void> {
-    await fetch(`${API_BASE_URL}/attendance/${eventId}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(attendance)
-    });
+    try {
+      const response = await fetch(`${API_BASE_URL}/attendance/${eventId}/${attendanceId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(attendance),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to update attendance');
+      }
+    } catch (error) {
+      console.error("出席データ更新エラー:", error);
+      throw error;
+    }
   },
 
   async saveCarArrangement(eventId: string, arrangement: any): Promise<void> {
-    await fetch(`${API_BASE_URL}/car-arrangement/${eventId}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(arrangement)
-    });
+    try {
+      const response = await fetch(`${API_BASE_URL}/car-arrangement/${eventId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(arrangement),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to save car arrangement');
+      }
+    } catch (error) {
+      console.error("配車データ保存エラー:", error);
+      throw error;
+    }
   },
 
   async getCarArrangement(eventId: string): Promise<any> {
-    const response = await fetch(`${API_BASE_URL}/car-arrangement/${eventId}`);
-    return response.json();
+    try {
+      const response = await fetch(`${API_BASE_URL}/car-arrangement/${eventId}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch car arrangement');
+      }
+      return await response.json();
+    } catch (error) {
+      console.error("配車データ取得エラー:", error);
+      return null;
+    }
   }
 };
