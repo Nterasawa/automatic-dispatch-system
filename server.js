@@ -5,11 +5,10 @@ const fs = require('fs').promises;
 const path = require('path');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
-
 app.use(cors());
 app.use(express.json());
 
+const PORT = process.env.PORT || 3000;
 const DATA_DIR = path.join(__dirname, 'data');
 const DATA_FILE = path.join(DATA_DIR, 'events.json');
 
@@ -19,12 +18,12 @@ async function initializeStorage() {
     try {
       await fs.access(DATA_FILE);
     } catch {
-      await fs.writeFile(DATA_FILE, '[]', 'utf8');
+      await fs.writeFile(DATA_FILE, '[]');
     }
     return true;
   } catch (error) {
-    console.error('Storage initialization failed:', error);
-    return false;
+    console.error('Storage initialization error:', error);
+    throw error;
   }
 }
 
@@ -51,17 +50,11 @@ app.get('/api/events', async (req, res) => {
 
 app.post('/api/events', async (req, res) => {
   try {
-    await initializeStorage();
     const event = req.body;
-    
-    if (!event || !event.title || !event.date) {
-      return res.status(400).json({ error: 'Invalid event data' });
-    }
-
+    await initializeStorage();
     const data = await fs.readFile(DATA_FILE, 'utf8');
     const events = JSON.parse(data);
     events.push(event);
-    
     await fs.writeFile(DATA_FILE, JSON.stringify(events, null, 2));
     res.status(201).json(event);
   } catch (error) {
@@ -71,6 +64,5 @@ app.post('/api/events', async (req, res) => {
 });
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running on port ${PORT}`);
-  initializeStorage();
+  console.log(`Server is running on port ${PORT}`);
 });
