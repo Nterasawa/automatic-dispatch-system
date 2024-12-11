@@ -10,29 +10,36 @@ const app = express();
 const DATA_DIR = path.join(__dirname, '../../data');
 const EVENTS_FILE = path.join(DATA_DIR, 'events.json');
 
-app.use(cors({
-  origin: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  credentials: true
-}));
-
+// CORSの設定
+app.use(cors());
 app.use(express.json());
 
+// データディレクトリとファイルの初期化
 const initDataDir = async () => {
   try {
     await fs.mkdir(DATA_DIR, { recursive: true });
     try {
       await fs.access(EVENTS_FILE);
     } catch {
-      await fs.writeFile(EVENTS_FILE, '[]');
+      await fs.writeFile(EVENTS_FILE, '[]', 'utf8');
     }
+    return true;
   } catch (error) {
     console.error('Init data dir error:', error);
+    return false;
   }
 };
 
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok' });
+app.get('/api/health', async (req, res) => {
+  try {
+    const initialized = await initDataDir();
+    if (!initialized) {
+      throw new Error('Failed to initialize data directory');
+    }
+    res.json({ status: 'ok' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 app.get('/api/events', async (req, res) => {
@@ -49,16 +56,19 @@ app.post('/api/events', async (req, res) => {
   try {
     const data = await fs.readFile(EVENTS_FILE, 'utf8');
     const events = JSON.parse(data);
-    events.push(req.body);
-    await fs.writeFile(EVENTS_FILE, JSON.stringify(events, null, 2));
-    res.status(201).json(req.body);
+    const newEvent = req.body;
+    events.push(newEvent);
+    await fs.writeFile(EVENTS_FILE, JSON.stringify(events, null, 2), 'utf8');
+    res.status(201).json(newEvent);
   } catch (error) {
     console.error('Create event error:', error);
     res.status(500).json({ error: error.message });
   }
 });
 
+// サーバーの起動前にデータディレクトリを初期化
 await initDataDir();
+
 app.listen(3000, '0.0.0.0', () => {
   console.log('Server running on port 3000');
 });
