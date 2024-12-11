@@ -13,6 +13,12 @@ const PORT = 3000;
 const DATA_DIR = path.join(__dirname, 'data');
 const DATA_FILE = path.join(DATA_DIR, 'events.json');
 
+// エラーハンドリングミドルウェア
+app.use((err, req, res, next) => {
+  console.error('Server error:', err);
+  res.status(500).json({ error: err.message || 'サーバーエラーが発生しました' });
+});
+
 app.use(cors());
 app.use(express.json());
 
@@ -21,9 +27,12 @@ const initializeDataFile = async () => {
     await fs.mkdir(DATA_DIR, { recursive: true });
     try {
       await fs.access(DATA_FILE);
-    } catch {
+      const data = await fs.readFile(DATA_FILE, 'utf8');
+      JSON.parse(data); // 既存のファイルが正しいJSONかチェック
+    } catch (error) {
       await fs.writeFile(DATA_FILE, '[]', 'utf8');
     }
+    console.log('Data file initialized successfully');
     return true;
   } catch (error) {
     console.error('Storage initialization failed:', error);
