@@ -1,4 +1,3 @@
-
 const express = require('express');
 const cors = require('cors');
 const fs = require('fs').promises;
@@ -7,6 +6,31 @@ const path = require('path');
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// Add attendance endpoint
+app.post('/api/events/:eventId/attendances', async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const attendance = req.body;
+    await fs.mkdir(DATA_DIR, { recursive: true });
+    const attendancesFile = path.join(DATA_DIR, `attendances_${eventId}.json`);
+    
+    let attendances = [];
+    try {
+      const data = await fs.readFile(attendancesFile, 'utf8');
+      attendances = JSON.parse(data);
+    } catch (error) {
+      // File doesn't exist yet, that's OK
+    }
+    
+    attendances.push(attendance);
+    await fs.writeFile(attendancesFile, JSON.stringify(attendances, null, 2));
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Save attendance error:', error);
+    res.status(500).json({ error: 'Failed to save attendance' });
+  }
+});
 
 const PORT = process.env.PORT || 3000;
 const DATA_DIR = path.join(__dirname, 'data');
@@ -59,25 +83,6 @@ app.get('/api/events/:eventId/attendances', async (req, res) => {
     } catch {
       res.json([]);
     }
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.post('/api/events/:eventId/attendances', async (req, res) => {
-  try {
-    const { eventId } = req.params;
-    const attendance = req.body;
-    await fs.mkdir(DATA_DIR, { recursive: true });
-    const attendancesFile = path.join(DATA_DIR, `attendances_${eventId}.json`);
-    let attendances = [];
-    try {
-      const data = await fs.readFile(attendancesFile, 'utf8');
-      attendances = JSON.parse(data);
-    } catch {}
-    attendances.push(attendance);
-    await fs.writeFile(attendancesFile, JSON.stringify(attendances, null, 2));
-    res.status(201).json(attendance);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
