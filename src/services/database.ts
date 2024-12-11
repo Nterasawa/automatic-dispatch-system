@@ -1,38 +1,50 @@
 
 import { Event } from '../types/event';
 import { AttendanceData } from '../types/attendance';
-import sqlite3 from 'sqlite3';
-import { open } from 'sqlite';
+import fs from 'fs/promises';
+import path from 'path';
 
-const dbPromise = open({
-  filename: './data/events.db',
-  driver: sqlite3.Database
-});
+const DB_PATH = './data/events.json';
 
 export class DatabaseService {
   static async initializeDatabase() {
-    const db = await dbPromise;
-    await db.exec(`
-      CREATE TABLE IF NOT EXISTS events (
-        id TEXT PRIMARY KEY,
-        title TEXT NOT NULL,
-        date TEXT NOT NULL,
-        attendees INTEGER DEFAULT 0,
-        cars INTEGER DEFAULT 0
-      )
-    `);
+    try {
+      await fs.access(DB_PATH);
+    } catch {
+      await fs.mkdir(path.dirname(DB_PATH), { recursive: true });
+      await fs.writeFile(DB_PATH, JSON.stringify([]));
+    }
   }
 
   static async getEvents(): Promise<Event[]> {
-    const db = await dbPromise;
-    return db.all('SELECT * FROM events ORDER BY date DESC');
+    try {
+      const data = await fs.readFile(DB_PATH, 'utf-8');
+      return JSON.parse(data);
+    } catch (error) {
+      console.error('Get events error:', error);
+      return [];
+    }
   }
 
   static async saveEvent(event: Event): Promise<void> {
-    const db = await dbPromise;
-    await db.run(
-      'INSERT INTO events (id, title, date, attendees, cars) VALUES (?, ?, ?, ?, ?)',
-      [event.id, event.title, event.date, event.attendees, event.cars]
-    );
+    try {
+      const events = await this.getEvents();
+      events.push(event);
+      await fs.writeFile(DB_PATH, JSON.stringify(events, null, 2));
+    } catch (error) {
+      console.error('Save event error:', error);
+      throw error;
+    }
+  }
+
+  static async deleteEvent(id: string): Promise<void> {
+    try {
+      const events = await this.getEvents();
+      const filteredEvents = events.filter(event => event.id !== id);
+      await fs.writeFile(DB_PATH, JSON.stringify(filteredEvents, null, 2));
+    } catch (error) {
+      console.error('Delete event error:', error);
+      throw error;
+    }
   }
 }
