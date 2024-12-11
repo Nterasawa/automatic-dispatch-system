@@ -7,24 +7,13 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
-const DATA_DIR = '/tmp/eagles-data';  // Replitの書き込み可能な一時ディレクトリを使用
+const DATA_DIR = '/tmp/eagles-data';
 const EVENTS_FILE = path.join(DATA_DIR, 'events.json');
 
-// ミドルウェアの設定
 app.use(express.json());
-app.use(cors({ origin: '*' }));
+app.use(cors());
 app.use(express.static(path.join(__dirname, '../../dist')));
 
-// エラーハンドリングミドルウェア
-app.use((err, req, res, next) => {
-  console.error('Server error:', err);
-  res.status(500).json({
-    error: true,
-    message: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message
-  });
-});
-
-// データディレクトリの初期化を確実に行う
 const initializeStorage = async () => {
   try {
     await fs.mkdir(DATA_DIR, { recursive: true });
@@ -40,11 +29,10 @@ const initializeStorage = async () => {
   }
 };
 
-// APIエンドポイント
 app.get('/api/health', async (req, res) => {
   try {
     await fs.access(DATA_DIR);
-    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+    res.json({ status: 'ok' });
   } catch (error) {
     res.status(500).json({ error: true, message: 'Storage access failed' });
   }
@@ -71,14 +59,12 @@ app.post('/api/events', async (req, res) => {
   }
 });
 
-// サーバー起動
 const startServer = async () => {
   try {
     await initializeStorage();
-    const port = process.env.PORT || 3000;
+    const port = 3001;
     app.listen(port, '0.0.0.0', () => {
       console.log(`Server running on port ${port}`);
-      console.log(`Data directory: ${DATA_DIR}`);
     });
   } catch (error) {
     console.error('Server failed to start:', error);
