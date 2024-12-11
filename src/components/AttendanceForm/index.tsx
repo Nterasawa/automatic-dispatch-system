@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { RoleSection } from "./RoleSection";
@@ -36,12 +37,6 @@ export const AttendanceForm: React.FC = () => {
     setWantsCar,
     setNotes,
   } = useAttendanceForm();
-
-  const { handleSubmit } = useAttendanceForm();
-  const onSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    handleSubmit(e);
-  };
 
   const setFormData = (newData: any) => {
     if ("role" in newData) setRole(newData.role);
@@ -115,17 +110,17 @@ export const AttendanceForm: React.FC = () => {
       <div className="max-w-2xl mx-auto w-full p-4">
         <div className="bg-white rounded-lg shadow-md p-6">
           <form onSubmit={handleSubmit} className="space-y-6">
-            <RoleSection formData={formData} setFormData={setFormData} />
-            <MemberInfoSection formData={formData} setFormData={setFormData} />
-            <AttendanceSection formData={formData} setFormData={setFormData} />
-            {formData.status === "○" && (
-              <TransportSection formData={formData} setFormData={setFormData} />
+            <RoleSection formData={{ role }} setFormData={setFormData} />
+            <MemberInfoSection formData={{ memberName: name }} setFormData={setFormData} />
+            <AttendanceSection formData={{ status }} setFormData={setFormData} />
+            {status === "○" && (
+              <TransportSection formData={{ canDrive, availableSeats, familyPassengers, needsCarArrangement: wantsCar }} setFormData={setFormData} />
             )}
-            {formData.role === "コーチ" && (
-              <CoachSection formData={formData} setFormData={setFormData} />
+            {role === "コーチ" && (
+              <CoachSection formData={{ needsOnigiri }} setFormData={setFormData} />
             )}
             <NotesSection
-              formData={formData}
+              formData={{ notes }}
               setFormData={setFormData}
               charCount={charCount}
             />
