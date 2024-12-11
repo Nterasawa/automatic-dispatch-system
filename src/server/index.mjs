@@ -22,7 +22,6 @@ const initializeStorage = async () => {
     } catch {
       await fs.writeFile(EVENTS_FILE, '[]', 'utf8');
     }
-    return true;
   } catch (error) {
     console.error('Storage initialization failed:', error);
     throw error;
@@ -62,7 +61,7 @@ app.post('/api/events', async (req, res) => {
 const startServer = async () => {
   try {
     await initializeStorage();
-    const port = 3001;
+    const port = process.env.PORT || 3001;
     app.listen(port, '0.0.0.0', () => {
       console.log(`Server running on port ${port}`);
     });
