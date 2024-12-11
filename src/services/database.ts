@@ -1,31 +1,38 @@
 
-import { Event } from '../types/event';
-import { AttendanceData } from '../types/attendance';
-
 export class DatabaseService {
+  private static baseUrl = '/api';
+
   static async initializeDatabase() {
     try {
-      const response = await fetch('/api/health');
-      return await response.json();
+      const response = await fetch(`${this.baseUrl}/health`);
+      if (!response.ok) {
+        throw new Error('Database initialization failed');
+      }
+      const data = await response.json();
+      return data;
     } catch (error) {
       console.error('Database initialization error:', error);
       throw error;
     }
   }
 
-  static async getEvents(): Promise<Event[]> {
+  static async getEvents() {
     try {
-      const response = await fetch('/api/events');
-      return await response.json();
+      const response = await fetch(`${this.baseUrl}/events`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch events');
+      }
+      const data = await response.json();
+      return data;
     } catch (error) {
       console.error('Get events error:', error);
       return [];
     }
   }
 
-  static async saveEvent(event: Event): Promise<void> {
+  static async saveEvent(event: any) {
     try {
-      const response = await fetch('/api/events', {
+      const response = await fetch(`${this.baseUrl}/events`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -35,22 +42,10 @@ export class DatabaseService {
       if (!response.ok) {
         throw new Error('Failed to save event');
       }
+      const data = await response.json();
+      return data;
     } catch (error) {
-      console.error('Save event error:', error);
-      throw error;
-    }
-  }
-
-  static async deleteEvent(id: string): Promise<void> {
-    try {
-      const response = await fetch(`/api/events/${id}`, {
-        method: 'DELETE',
-      });
-      if (!response.ok) {
-        throw new Error('Failed to delete event');
-      }
-    } catch (error) {
-      console.error('Delete event error:', error);
+      console.error('Event save error:', error);
       throw error;
     }
   }
