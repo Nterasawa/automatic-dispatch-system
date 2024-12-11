@@ -65,33 +65,30 @@ export const AttendanceForm: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!eventId) return;
 
     try {
+      if (!eventId) return;
+
       const attendanceData = {
-        id: isEditMode ? attendanceId! : crypto.randomUUID(),
+        id: attendanceId || crypto.randomUUID(),
         eventId,
-        role: formData.role,
-        memberName: formData.memberName,
-        status: formData.status,
-        canDrive: formData.canDrive,
-        availableSeats: formData.availableSeats,
-        familyPassengers: formData.familyPassengers,
-        needsOnigiri:
-          formData.role === "コーチ" ? formData.needsOnigiri : undefined,
-        needsCarArrangement:
-          formData.role === "コーチ" ? formData.needsCarArrangement : undefined,
-        notes: formData.notes,
+        role,
+        memberName: name,
+        status,
+        canDrive,
+        availableSeats,
+        familyPassengers,
+        needsOnigiri,
+        needsCarArrangement: wantsCar,
+        notes,
         timestamp: new Date().toISOString(),
       };
 
       if (isEditMode && attendanceId) {
-        // 既存のデータを削除
         await DatabaseService.deleteAttendance(eventId, attendanceId);
       }
-      // 新しいデータを保存
       await DatabaseService.saveAttendance(eventId, attendanceData);
-      navigate("/completion?mode=update"); // 更新モードを指定
+      navigate("/completion?mode=update");
     } catch (error) {
       console.error("出欠登録エラー:", error);
       alert("保存に失敗しました。もう一度お試しください。");
