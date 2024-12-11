@@ -20,7 +20,10 @@ app.get('/api/events', (req, res) => {
 
 app.post('/api/events', (req, res) => {
   try {
+    console.log('Received event creation request:', req.body);
+    
     if (!req.body.title || !req.body.date) {
+      console.log('Validation failed: missing title or date');
       return res.status(400).json({ error: 'Title and date are required' });
     }
     
@@ -30,12 +33,24 @@ app.post('/api/events', (req, res) => {
       attendees: 0,
       cars: 0
     };
+    
+    console.log('Creating new event:', event);
     events.push(event);
+    
+    console.log('Event created successfully');
     res.status(201).json(event);
   } catch (error) {
     console.error('Create event error:', error);
-    res.status(500).json({ error: 'Failed to create event' });
+    res.status(500).json({ 
+      error: 'Failed to create event',
+      details: error.message 
+    });
   }
+});
+
+// サーバーの起動確認用エンドポイント
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok' });
 });
 
 app.delete('/api/events/:id', (req, res) => {
