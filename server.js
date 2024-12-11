@@ -2,6 +2,7 @@
 const express = require('express');
 const cors = require('cors');
 const Database = require('@replit/database');
+const path = require('path');
 
 const app = express();
 const db = new Database();
@@ -11,7 +12,9 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));
+
 app.use(express.json());
+app.use(express.static('dist'));
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
@@ -50,6 +53,11 @@ app.delete('/api/events/:id', async (req, res) => {
     console.error('Delete event error:', error);
     res.status(500).json({ error: error.message });
   }
+});
+
+// Catch all other routes and return the index.html
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
 const PORT = 3000;
