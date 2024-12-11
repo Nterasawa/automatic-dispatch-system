@@ -1,114 +1,7 @@
+
 import { useState, useEffect } from "react";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { DatabaseService } from "../services/database";
-import { useNavigate } from "react-router-dom";
-import { AttendanceData } from "../types/attendance";
-
-export const useAttendanceForm = () => {
-  const [searchParams] = useSearchParams();
-  const { eventId } = useParams();
-  const navigate = useNavigate();
-  const mode = searchParams.get("mode");
-  const attendanceId = searchParams.get("attendanceId");
-
-  const [role, setRole] = useState("団員");
-  const [name, setName] = useState("");
-  const [status, setStatus] = useState("○");
-  const [canDrive, setCanDrive] = useState("×");
-  const [availableSeats, setAvailableSeats] = useState(0);
-  const [familyPassengers, setFamilyPassengers] = useState(0);
-  const [needsOnigiri, setNeedsOnigiri] = useState("不要");
-  const [wantsCar, setWantsCar] = useState("×");
-  const [notes, setNotes] = useState("");
-
-  useEffect(() => {
-    if (mode === "edit" && attendanceId) {
-      loadAttendanceData();
-    }
-  }, [mode, attendanceId]);
-
-  const loadAttendanceData = async () => {
-    if (!eventId || !attendanceId) return;
-    const attendances = await DatabaseService.getAttendances(eventId);
-    const attendance = attendances.find(a => a.id === attendanceId);
-    if (attendance) {
-      setRole(attendance.role);
-      setName(attendance.memberName);
-      setStatus(attendance.status);
-      setCanDrive(attendance.canDrive);
-      setAvailableSeats(attendance.availableSeats);
-      setFamilyPassengers(attendance.familyPassengers);
-      setNeedsOnigiri(attendance.needsOnigiri || "不要");
-      setWantsCar(attendance.needsCarArrangement || "×");
-      setNotes(attendance.notes || "");
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!eventId) return;
-
-    const attendanceData: AttendanceData = {
-      id: attendanceId || `attendance-${Date.now()}`,
-      eventId,
-      memberName: name,
-      role,
-      status,
-      canDrive,
-      availableSeats,
-      familyPassengers,
-      needsOnigiri: role === "コーチ" ? needsOnigiri : undefined,
-      needsCarArrangement: wantsCar,
-      notes,
-    };
-
-    try {
-      if (mode === "edit" && attendanceId) {
-        await DatabaseService.updateAttendance(eventId, attendanceId, attendanceData);
-      } else {
-        await DatabaseService.saveAttendance(eventId, attendanceData);
-      }
-      navigate("/completion");
-    } catch (error) {
-      console.error("保存エラー:", error);
-      alert("保存に失敗しました");
-    }
-  };
-
-  return {
-    role,
-    setRole,
-    name,
-    setName,
-    status,
-    setStatus,
-    canDrive,
-    setCanDrive,
-    availableSeats,
-    setAvailableSeats,
-    familyPassengers,
-    setFamilyPassengers,
-    needsOnigiri,
-    setNeedsOnigiri,
-    wantsCar,
-    setWantsCar,
-    notes,
-    setNotes,
-    handleSubmit,
-  };
-};
-
-type AttendanceFormState = {
-  role: "団員" | "コーチ" | undefined;
-  memberName: string;
-  status: "○" | "×" | undefined;
-  canDrive: "○" | "×" | undefined;
-  availableSeats: number;
-  familyPassengers: number;
-  needsOnigiri: "必要" | "不要" | undefined;
-  needsCarArrangement: "○" | "×" | undefined;
-  notes: string;
-};
 
 export const useAttendanceForm = () => {
   const { eventId } = useParams();
@@ -124,9 +17,7 @@ export const useAttendanceForm = () => {
   const [canDrive, setCanDrive] = useState<"○" | "×" | undefined>(undefined);
   const [availableSeats, setAvailableSeats] = useState(0);
   const [familyPassengers, setFamilyPassengers] = useState(0);
-  const [needsOnigiri, setNeedsOnigiri] = useState<"必要" | "不要" | undefined>(
-    undefined,
-  );
+  const [needsOnigiri, setNeedsOnigiri] = useState<"必要" | "不要" | undefined>(undefined);
   const [wantsCar, setWantsCar] = useState<"○" | "×" | undefined>(undefined);
   const [notes, setNotes] = useState("");
 
@@ -151,12 +42,8 @@ export const useAttendanceForm = () => {
             setCanDrive(attendance.canDrive as "○" | "×");
             setAvailableSeats(attendance.availableSeats);
             setFamilyPassengers(attendance.familyPassengers);
-            setNeedsOnigiri(
-              attendance.needsOnigiri as "必要" | "不要" | undefined,
-            );
-            setWantsCar(
-              attendance.needsCarArrangement as "○" | "×" | undefined,
-            );
+            setNeedsOnigiri(attendance.needsOnigiri as "必要" | "不要" | undefined);
+            setWantsCar(attendance.needsCarArrangement as "○" | "×" | undefined);
             setNotes(attendance.notes);
           }
         }
@@ -188,11 +75,8 @@ export const useAttendanceForm = () => {
         timestamp: new Date().toISOString(),
       };
 
-      if (isEditMode) {
-        const currentAttendances = await DatabaseService.getAttendances(eventId);
-        const updatedAttendances = currentAttendances.filter(a => a.id !== attendanceId);
-        updatedAttendances.push(attendanceData);
-        localStorage.setItem(DatabaseService.ATTENDANCE_KEY(eventId), JSON.stringify(updatedAttendances));
+      if (isEditMode && attendanceId) {
+        await DatabaseService.updateAttendance(eventId, attendanceId, attendanceData);
       } else {
         await DatabaseService.saveAttendance(eventId, attendanceData);
       }
