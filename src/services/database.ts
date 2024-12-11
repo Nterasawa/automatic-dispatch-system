@@ -2,7 +2,9 @@
 import { Event } from '../types/event';
 import { AttendanceData } from '../types/attendance';
 
-const API_BASE_URL = '/api';
+const API_BASE_URL = window.location.hostname.includes('replit')
+  ? `https://${window.location.hostname}/api`
+  : 'http://localhost:3000/api';
 
 export class DatabaseService {
   static async initializeDatabase() {

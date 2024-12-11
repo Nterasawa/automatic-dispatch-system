@@ -7,15 +7,11 @@ const path = require('path');
 const app = express();
 const db = new Database();
 
-app.use(cors({
-  origin: '*',
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  credentials: true
-}));
-
+app.use(cors());
 app.use(express.json());
-app.use(express.static('dist'));
+app.use(express.static(path.join(__dirname, 'dist')));
 
+// API routes
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
 });
@@ -43,19 +39,7 @@ app.post('/api/events', async (req, res) => {
   }
 });
 
-app.delete('/api/events/:id', async (req, res) => {
-  try {
-    const events = await db.get('events') || [];
-    const filteredEvents = events.filter(event => event.id !== req.params.id);
-    await db.set('events', filteredEvents);
-    res.status(200).json({ message: 'Event deleted successfully' });
-  } catch (error) {
-    console.error('Delete event error:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Catch all other routes and return the index.html
+// Serve index.html for all other routes
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
