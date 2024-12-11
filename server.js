@@ -6,19 +6,20 @@ const path = require('path');
 
 const app = express();
 const PORT = 3000;
-const dataFile = path.join(__dirname, 'data', 'events.json');
+const DATA_DIR = path.join(__dirname, 'data');
+const DATA_FILE = path.join(DATA_DIR, 'events.json');
 
 app.use(cors());
 app.use(express.json());
 
-// データディレクトリとファイルの初期化
+// データファイルの初期化
 const initializeDataFile = async () => {
   try {
-    await fs.mkdir(path.dirname(dataFile), { recursive: true });
+    await fs.mkdir(DATA_DIR, { recursive: true });
     try {
-      await fs.access(dataFile);
+      await fs.access(DATA_FILE);
     } catch {
-      await fs.writeFile(dataFile, '[]', 'utf8');
+      await fs.writeFile(DATA_FILE, '[]', 'utf8');
     }
     return true;
   } catch (error) {
@@ -27,13 +28,13 @@ const initializeDataFile = async () => {
   }
 };
 
-app.get('/api/health', async (req, res) => {
+app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
 app.get('/api/events', async (req, res) => {
   try {
-    const data = await fs.readFile(dataFile, 'utf8');
+    const data = await fs.readFile(DATA_FILE, 'utf8');
     res.json(JSON.parse(data));
   } catch (error) {
     console.error('Get events error:', error);
@@ -43,11 +44,11 @@ app.get('/api/events', async (req, res) => {
 
 app.post('/api/events', async (req, res) => {
   try {
-    const data = await fs.readFile(dataFile, 'utf8');
+    const data = await fs.readFile(DATA_FILE, 'utf8');
     const events = JSON.parse(data);
     const event = req.body;
     events.push(event);
-    await fs.writeFile(dataFile, JSON.stringify(events, null, 2));
+    await fs.writeFile(DATA_FILE, JSON.stringify(events, null, 2));
     res.json(event);
   } catch (error) {
     console.error('Save event error:', error);
@@ -55,6 +56,7 @@ app.post('/api/events', async (req, res) => {
   }
 });
 
+// サーバー起動前にデータファイルを初期化
 initializeDataFile().then((success) => {
   if (success) {
     app.listen(PORT, '0.0.0.0', () => {
