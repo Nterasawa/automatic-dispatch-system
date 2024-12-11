@@ -6,14 +6,18 @@ const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-
 const DATA_DIR = path.join(__dirname, 'data');
 const DATA_FILE = path.join(DATA_DIR, 'events.json');
 
 app.use(cors());
 app.use(express.json());
 
-// データディレクトリとファイルの初期化
+// エラーハンドリングミドルウェア
+app.use((err, req, res, next) => {
+  console.error('Server error:', err);
+  res.status(500).json({ error: err.message || 'Internal server error' });
+});
+
 async function initializeStorage() {
   try {
     await fs.mkdir(DATA_DIR, { recursive: true });
@@ -22,6 +26,7 @@ async function initializeStorage() {
     } catch {
       await fs.writeFile(DATA_FILE, '[]', 'utf8');
     }
+    console.log('Storage initialized successfully');
     return true;
   } catch (error) {
     console.error('Storage initialization failed:', error);
@@ -31,11 +36,13 @@ async function initializeStorage() {
 
 app.post('/api/initialize', async (req, res) => {
   try {
-    await initializeStorage();
+    const success = await initializeStorage();
+    if (!success) {
+      throw new Error('Failed to initialize storage');
+    }
     res.json({ success: true });
   } catch (error) {
-    console.error('Initialization error:', error);
-    res.status(500).json({ error: 'データベースの初期化に失敗しました' });
+    res.status(500).json({ error: error.message });
   }
 });
 
@@ -45,29 +52,32 @@ app.get('/api/events', async (req, res) => {
     res.json(JSON.parse(data));
   } catch (error) {
     console.error('Get events error:', error);
-    res.status(500).json({ error: 'イベントの取得に失敗しました' });
+    res.status(500).json({ error: 'Failed to get events' });
   }
 });
 
 app.post('/api/events', async (req, res) => {
   try {
+    await initializeStorage();
     const event = req.body;
+    
     if (!event || !event.title || !event.date) {
-      return res.status(400).json({ error: 'イベントデータが不正です' });
+      return res.status(400).json({ error: 'Invalid event data' });
     }
 
     const data = await fs.readFile(DATA_FILE, 'utf8');
     const events = JSON.parse(data);
     events.push(event);
+    
     await fs.writeFile(DATA_FILE, JSON.stringify(events, null, 2), 'utf8');
     res.status(201).json(event);
   } catch (error) {
     console.error('Save event error:', error);
-    res.status(500).json({ error: 'イベントの保存に失敗しました' });
+    res.status(500).json({ error: 'Failed to save event' });
   }
 });
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
   initializeStorage();
 });
