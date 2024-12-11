@@ -7,17 +7,25 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
-const DATA_DIR = path.join(__dirname, '../../data');
+const DATA_DIR = '/tmp/eagles-data';  // Replitの書き込み可能な一時ディレクトリを使用
 const EVENTS_FILE = path.join(DATA_DIR, 'events.json');
 
-app.use(cors({
-  origin: true,
-  credentials: true
-}));
+// ミドルウェアの設定
 app.use(express.json());
-app.use(express.static('dist'));
+app.use(cors({ origin: '*' }));
+app.use(express.static(path.join(__dirname, '../../dist')));
 
-const initDataDir = async () => {
+// エラーハンドリングミドルウェア
+app.use((err, req, res, next) => {
+  console.error('Server error:', err);
+  res.status(500).json({
+    error: true,
+    message: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message
+  });
+});
+
+// データディレクトリの初期化を確実に行う
+const initializeStorage = async () => {
   try {
     await fs.mkdir(DATA_DIR, { recursive: true });
     try {
@@ -27,21 +35,18 @@ const initDataDir = async () => {
     }
     return true;
   } catch (error) {
-    console.error('Init data dir error:', error);
-    return false;
+    console.error('Storage initialization failed:', error);
+    throw error;
   }
 };
 
+// APIエンドポイント
 app.get('/api/health', async (req, res) => {
   try {
-    const initialized = await initDataDir();
-    if (!initialized) {
-      throw new Error('Failed to initialize data directory');
-    }
-    res.json({ status: 'ok' });
+    await fs.access(DATA_DIR);
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
   } catch (error) {
-    console.error('Health check error:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: true, message: 'Storage access failed' });
   }
 });
 
@@ -50,28 +55,35 @@ app.get('/api/events', async (req, res) => {
     const data = await fs.readFile(EVENTS_FILE, 'utf8');
     res.json(JSON.parse(data));
   } catch (error) {
-    console.error('Get events error:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: true, message: 'Failed to read events' });
   }
 });
 
 app.post('/api/events', async (req, res) => {
   try {
-    const data = await fs.readFile(EVENTS_FILE, 'utf8');
-    const events = JSON.parse(data);
+    const events = JSON.parse(await fs.readFile(EVENTS_FILE, 'utf8'));
     const newEvent = req.body;
     events.push(newEvent);
-    await fs.writeFile(EVENTS_FILE, JSON.stringify(events, null, 2), 'utf8');
+    await fs.writeFile(EVENTS_FILE, JSON.stringify(events, null, 2));
     res.status(201).json(newEvent);
   } catch (error) {
-    console.error('Create event error:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: true, message: 'Failed to create event' });
   }
 });
 
-await initDataDir();
+// サーバー起動
+const startServer = async () => {
+  try {
+    await initializeStorage();
+    const port = process.env.PORT || 3000;
+    app.listen(port, '0.0.0.0', () => {
+      console.log(`Server running on port ${port}`);
+      console.log(`Data directory: ${DATA_DIR}`);
+    });
+  } catch (error) {
+    console.error('Server failed to start:', error);
+    process.exit(1);
+  }
+};
 
-const port = process.env.PORT || 3000;
-app.listen(port, '0.0.0.0', () => {
-  console.log(`Server running on port ${port}`);
-});
+startServer();
