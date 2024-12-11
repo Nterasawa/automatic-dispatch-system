@@ -1,21 +1,23 @@
 
-import { Event } from "../types/event";
-import { AttendanceData } from "../types/attendance";
+import { Event } from '../types/event';
+import { AttendanceData } from '../types/attendance';
 
-const API_URL = window.location.hostname === 'localhost' ? 'http://localhost:3001' : '';
+const API_BASE_URL = 'http://0.0.0.0:3001/api';
 
 export class DatabaseService {
   static async initializeDatabase() {
-    // 初期化は不要になったため、空の実装とします
-    return;
+    // APIサーバーが起動していることを確認
+    try {
+      await fetch(`${API_BASE_URL}/events`);
+    } catch (error) {
+      console.error('データベース初期化エラー:', error);
+    }
   }
 
   static async getEvents(): Promise<Event[]> {
     try {
-      const response = await fetch(`${API_URL}/api/events`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch events');
-      }
+      const response = await fetch(`${API_BASE_URL}/events`);
+      if (!response.ok) throw new Error('Failed to fetch events');
       return await response.json();
     } catch (error) {
       console.error('イベント取得エラー:', error);
@@ -25,19 +27,29 @@ export class DatabaseService {
 
   static async saveEvent(event: Event): Promise<Event> {
     try {
-      const response = await fetch(`${API_URL}/api/events`, {
+      const response = await fetch(`${API_BASE_URL}/events`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(event),
       });
-      if (!response.ok) {
-        throw new Error('Failed to save event');
-      }
+      if (!response.ok) throw new Error('Failed to save event');
       return await response.json();
     } catch (error) {
       console.error('イベント保存エラー:', error);
+      throw new Error('Failed to save event');
+    }
+  }
+
+  static async deleteEvent(id: string): Promise<void> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/events/${id}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) throw new Error('Failed to delete event');
+    } catch (error) {
+      console.error('イベント削除エラー:', error);
       throw error;
     }
   }
