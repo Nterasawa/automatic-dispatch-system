@@ -6,11 +6,11 @@ export default defineConfig({
   plugins: [react()],
   server: {
     host: '0.0.0.0',
-    proxy: {
-      '/api': {
-        target: 'http://0.0.0.0:3000',
-        changeOrigin: true
-      }
+    port: 5173,
+    hmr: {
+      protocol: 'ws',
+      clientPort: 443,
+      overlay: false
     }
   }
 })
