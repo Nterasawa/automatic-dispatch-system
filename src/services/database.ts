@@ -159,16 +159,35 @@ export const DatabaseService = {
   async saveCarArrangement(eventId: string, arrangement: any): Promise<void> {
     try {
       const key = this.CAR_ARRANGEMENT_KEY(eventId);
-      localStorage.setItem(
-        key,
-        JSON.stringify({
-          arrangement,
-          timestamp: new Date().toISOString(),
-        }),
-      );
+      const data = {
+        arrangement,
+        timestamp: new Date().toISOString(),
+      };
+      localStorage.setItem(key, JSON.stringify(data));
+      
+      // バックアップキーにも保存
+      const backupKey = `${key}_backup`;
+      localStorage.setItem(backupKey, JSON.stringify(data));
     } catch (error) {
       console.error("配車結果保存エラー:", error);
       throw new Error("配車結果の保存に失敗しました");
+    }
+  },
+
+  async getCarArrangement(eventId: string): Promise<any | null> {
+    try {
+      const key = this.CAR_ARRANGEMENT_KEY(eventId);
+      const data = localStorage.getItem(key);
+      if (!data) {
+        // メインのデータが無い場合はバックアップを確認
+        const backupKey = `${key}_backup`;
+        const backupData = localStorage.getItem(backupKey);
+        return backupData ? JSON.parse(backupData) : null;
+      }
+      return JSON.parse(data);
+    } catch (error) {
+      console.error("配車結果取得エラー:", error);
+      return null;
     }
   },
 

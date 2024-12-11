@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { DatabaseService } from "../services/database";
+import { useNavigate } from "react-router-dom";
 
 type AttendanceFormState = {
   role: "団員" | "コーチ" | undefined;
@@ -19,6 +20,7 @@ export const useAttendanceForm = () => {
   const [searchParams] = useSearchParams();
   const attendanceId = searchParams.get("attendanceId");
   const isEditMode = searchParams.get("mode") === "edit";
+  const navigate = useNavigate();
 
   const [event, setEvent] = useState<any>(null);
   const [role, setRole] = useState<"団員" | "コーチ" | undefined>(undefined);
@@ -71,6 +73,40 @@ export const useAttendanceForm = () => {
     fetchData();
   }, [eventId, attendanceId, isEditMode]);
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!eventId) return;
+
+    try {
+      const attendanceData = {
+        id: attendanceId || crypto.randomUUID(),
+        eventId,
+        role,
+        memberName: name,
+        status,
+        canDrive,
+        availableSeats: parseInt(availableSeats.toString()),
+        familyPassengers: parseInt(familyPassengers.toString()),
+        needsOnigiri,
+        needsCarArrangement: wantsCar,
+        notes,
+        timestamp: new Date().toISOString(),
+      };
+
+      if (isEditMode) {
+        const currentAttendances = await DatabaseService.getAttendances(eventId);
+        const updatedAttendances = currentAttendances.filter(a => a.id !== attendanceId);
+        updatedAttendances.push(attendanceData);
+        localStorage.setItem(DatabaseService.ATTENDANCE_KEY(eventId), JSON.stringify(updatedAttendances));
+      } else {
+        await DatabaseService.saveAttendance(eventId, attendanceData);
+      }
+      navigate("/completion?mode=update");
+    } catch (error) {
+      console.error("データ保存エラー:", error);
+    }
+  };
+
   return {
     event,
     isEditMode,
@@ -94,5 +130,6 @@ export const useAttendanceForm = () => {
     setWantsCar,
     notes,
     setNotes,
+    handleSubmit,
   };
 };
