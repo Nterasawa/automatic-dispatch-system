@@ -37,16 +37,10 @@ export const AttendanceForm: React.FC = () => {
     setNotes,
   } = useAttendanceForm();
 
-  const formData = {
-    role,
-    memberName: name,
-    status,
-    canDrive,
-    availableSeats,
-    familyPassengers,
-    needsOnigiri,
-    needsCarArrangement: wantsCar,
-    notes,
+  const { handleSubmit } = useAttendanceForm();
+  const onSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleSubmit(e);
   };
 
   const setFormData = (newData: any) => {

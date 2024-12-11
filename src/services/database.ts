@@ -163,11 +163,10 @@ export const DatabaseService = {
         arrangement,
         timestamp: new Date().toISOString(),
       };
-      localStorage.setItem(key, JSON.stringify(data));
-      
-      // バックアップキーにも保存
-      const backupKey = `${key}_backup`;
-      localStorage.setItem(backupKey, JSON.stringify(data));
+      await Promise.all([
+        localStorage.setItem(key, JSON.stringify(data)),
+        localStorage.setItem(`${key}_backup`, JSON.stringify(data))
+      ]);
     } catch (error) {
       console.error("配車結果保存エラー:", error);
       throw new Error("配車結果の保存に失敗しました");
