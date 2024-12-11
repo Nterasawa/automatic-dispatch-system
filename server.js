@@ -39,6 +39,18 @@ app.post('/api/events', async (req, res) => {
   }
 });
 
+app.delete('/api/events/:id', async (req, res) => {
+  try {
+    const events = await db.get('events') || [];
+    const filteredEvents = events.filter(event => event.id !== req.params.id);
+    await db.set('events', filteredEvents);
+    res.status(200).json({ message: 'Event deleted successfully' });
+  } catch (error) {
+    console.error('Delete event error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 const PORT = 3000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);

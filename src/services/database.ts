@@ -2,7 +2,7 @@
 import { Event } from '../types/event';
 import { AttendanceData } from '../types/attendance';
 
-const API_BASE_URL = '/api';
+const API_BASE_URL = 'http://0.0.0.0:3000/api';
 
 export class DatabaseService {
   static async initializeDatabase() {
