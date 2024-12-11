@@ -1,3 +1,4 @@
+
 import express from 'express';
 import cors from 'cors';
 import { promises as fs } from 'fs';
@@ -37,24 +38,36 @@ app.get('/api/health', (req, res) => {
 app.get('/api/events', async (req, res) => {
   try {
     const data = await fs.readFile(DATA_FILE, 'utf8');
-    res.json(JSON.parse(data));
+    const events = JSON.parse(data);
+    res.json(events);
   } catch (error) {
     console.error('Get events error:', error);
-    res.status(500).json({ error: 'Failed to fetch events' });
+    res.status(500).json({ error: 'イベントの取得に失敗しました' });
   }
 });
 
 app.post('/api/events', async (req, res) => {
   try {
-    const data = await fs.readFile(DATA_FILE, 'utf8');
-    const events = JSON.parse(data);
     const event = req.body;
+    if (!event || !event.title || !event.date) {
+      return res.status(400).json({ error: 'イベントデータが不正です' });
+    }
+
+    let events = [];
+    try {
+      const data = await fs.readFile(DATA_FILE, 'utf8');
+      events = JSON.parse(data);
+    } catch (error) {
+      console.error('Reading events file error:', error);
+      events = [];
+    }
+
     events.push(event);
-    await fs.writeFile(DATA_FILE, JSON.stringify(events, null, 2));
-    res.json(event);
+    await fs.writeFile(DATA_FILE, JSON.stringify(events, null, 2), 'utf8');
+    res.status(201).json(event);
   } catch (error) {
     console.error('Save event error:', error);
-    res.status(500).json({ error: 'Failed to save event' });
+    res.status(500).json({ error: 'イベントの保存に失敗しました' });
   }
 });
 
