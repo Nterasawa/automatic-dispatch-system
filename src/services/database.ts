@@ -1,10 +1,14 @@
 
 import axios from 'axios';
 
+const api = axios.create({
+  baseURL: 'http://0.0.0.0:3000'
+});
+
 export class DatabaseService {
   static async initializeDatabase() {
     try {
-      const response = await axios.get('/api/health');
+      const response = await api.get('/api/health');
       if (response.data.status !== 'ok') {
         throw new Error('Database initialization failed');
       }
@@ -16,7 +20,7 @@ export class DatabaseService {
 
   static async getEvents() {
     try {
-      const response = await axios.get('/api/events');
+      const response = await api.get('/api/events');
       return response.data;
     } catch (error) {
       console.error('Get events error:', error);
@@ -26,7 +30,7 @@ export class DatabaseService {
 
   static async saveEvent(event: any) {
     try {
-      const response = await axios.post('/api/events', event);
+      const response = await api.post('/api/events', event);
       return response.data;
     } catch (error) {
       console.error('Save event error:', error);
