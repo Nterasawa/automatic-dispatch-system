@@ -1,9 +1,8 @@
 
 import { Event } from "../types/event";
 import { AttendanceData } from "../types/attendance";
-import Database from "@replit/database";
 
-const db = new Database();
+const API_BASE_URL = '/api';
 
 export const DatabaseService = {
   async initializeDatabase(): Promise<void> {
@@ -25,102 +24,49 @@ export const DatabaseService = {
   },
 
   async getEvents(): Promise<Event[]> {
-    try {
-      const events = await db.get("events");
-      return events || [];
-    } catch (error) {
-      console.error("イベント取得エラー:", error);
-      return [];
-    }
+    const response = await fetch(`${API_BASE_URL}/events`);
+    return response.json();
   },
 
   async saveEvent(event: Event): Promise<void> {
-    try {
-      const events = await this.getEvents();
-      const updatedEvents = [...events, event];
-      await db.set("events", updatedEvents);
-    } catch (error) {
-      console.error("イベント保存エラー:", error);
-      throw new Error("イベントの保存に失敗しました");
-    }
-  },
-
-  async deleteEvent(eventId: string): Promise<void> {
-    try {
-      const events = await this.getEvents();
-      const filteredEvents = events.filter((event) => event.id !== eventId);
-      await db.set("events", filteredEvents);
-      await db.delete(`attendance_${eventId}`);
-      await db.delete(`car_arrangement_${eventId}`);
-    } catch (error) {
-      console.error("イベント削除エラー:", error);
-      throw new Error("イベントの削除に失敗しました");
-    }
-  },
-
-  async saveAttendance(eventId: string, attendance: AttendanceData): Promise<void> {
-    try {
-      const attendances = await this.getAttendances(eventId);
-      const updatedAttendances = [...attendances, attendance];
-      await db.set(`attendance_${eventId}`, updatedAttendances);
-    } catch (error) {
-      console.error("出欠保存エラー:", error);
-      throw new Error("出欠情報の保存に失敗しました");
-    }
+    await fetch(`${API_BASE_URL}/events`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(event)
+    });
   },
 
   async getAttendances(eventId: string): Promise<AttendanceData[]> {
-    try {
-      const attendances = await db.get(`attendance_${eventId}`);
-      return attendances || [];
-    } catch (error) {
-      console.error("出欠取得エラー:", error);
-      return [];
-    }
+    const response = await fetch(`${API_BASE_URL}/attendance/${eventId}`);
+    return response.json();
   },
 
-  async updateAttendance(eventId: string, attendanceId: string, updatedData: AttendanceData): Promise<void> {
-    try {
-      const attendances = await this.getAttendances(eventId);
-      const updatedAttendances = attendances.map(attendance => 
-        attendance.id === attendanceId ? updatedData : attendance
-      );
-      await db.set(`attendance_${eventId}`, updatedAttendances);
-    } catch (error) {
-      console.error("出欠更新エラー:", error);
-      throw new Error("出欠情報の更新に失敗しました");
-    }
+  async saveAttendance(eventId: string, attendance: AttendanceData): Promise<void> {
+    await fetch(`${API_BASE_URL}/attendance/${eventId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(attendance)
+    });
   },
 
-  async deleteAttendance(eventId: string, attendanceId: string): Promise<void> {
-    try {
-      const attendances = await this.getAttendances(eventId);
-      const filteredAttendances = attendances.filter(
-        (a) => a.id !== attendanceId,
-      );
-      await db.set(`attendance_${eventId}`, filteredAttendances);
-    } catch (error) {
-      console.error("出欠削除エラー:", error);
-      throw new Error("出欠情報の削除に失敗しました");
-    }
+  async updateAttendance(eventId: string, attendanceId: string, attendance: AttendanceData): Promise<void> {
+    await fetch(`${API_BASE_URL}/attendance/${eventId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(attendance)
+    });
   },
 
   async saveCarArrangement(eventId: string, arrangement: any): Promise<void> {
-    try {
-      await db.set(`car_arrangement_${eventId}`, arrangement);
-      console.log("配車結果を保存しました:", arrangement);
-    } catch (error) {
-      console.error("配車結果保存エラー:", error);
-      throw new Error("配車結果の保存に失敗しました");
-    }
+    await fetch(`${API_BASE_URL}/car-arrangement/${eventId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(arrangement)
+    });
   },
 
-  async getCarArrangement(eventId: string): Promise<any | null> {
-    try {
-      return await db.get(`car_arrangement_${eventId}`);
-    } catch (error) {
-      console.error("配車結果取得エラー:", error);
-      return null;
-    }
-  },
+  async getCarArrangement(eventId: string): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/car-arrangement/${eventId}`);
+    return response.json();
+  }
 };
