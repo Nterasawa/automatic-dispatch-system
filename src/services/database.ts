@@ -1,7 +1,7 @@
 import { Event } from '../types/event';
 import { AttendanceData } from '../types/attendance';
 
-const API_BASE_URL = `${window.location.protocol}//${window.location.hostname}:3000/api`;
+const API_BASE_URL = `/api`;
 
 export class DatabaseService {
   static async initializeDatabase() {

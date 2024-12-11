@@ -7,13 +7,7 @@ const port = 3000;
 
 let events = [];
 
-app.use(cors({
-  origin: '*',
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  credentials: true,
-  optionsSuccessStatus: 200
-}));
-
+app.use(cors());
 app.use(express.json());
 
 app.get('/api/events', (req, res) => {
