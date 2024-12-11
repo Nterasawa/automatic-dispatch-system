@@ -8,7 +8,15 @@ export const DatabaseService = {
 
   async initializeDatabase(): Promise<void> {
     try {
+      // データベースの存在確認
+      if (!localStorage.getItem(this.EVENTS_KEY)) {
+        console.log("データベースが存在しません。初期化を開始します。");
+        localStorage.setItem(this.EVENTS_KEY, JSON.stringify([]));
+      }
+      
       const events = await this.getEvents();
+      console.log("現在のイベント数:", events.length);
+      
       if (events.length === 0) {
         const event: Event = {
           id: "event-" + Date.now(),
@@ -94,9 +102,20 @@ export const DatabaseService = {
 
   async saveEvent(event: Event): Promise<void> {
     try {
+      if (!event || !event.id) {
+        throw new Error("無効なイベントデータです");
+      }
+      
       const events = await this.getEvents();
+      if (!Array.isArray(events)) {
+        console.error("イベントデータが不正です");
+        localStorage.setItem(this.EVENTS_KEY, JSON.stringify([]));
+        events = [];
+      }
+      
       events.push(event);
       localStorage.setItem(this.EVENTS_KEY, JSON.stringify(events));
+      console.log(`イベントを保存しました: ${event.id}`);
     } catch (error) {
       console.error("イベント保存エラー:", error);
       throw new Error("イベントの保存に失敗しました");
