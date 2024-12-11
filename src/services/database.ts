@@ -4,6 +4,8 @@ import { Event } from '../types/event';
 const API_BASE_URL = '/api';
 
 export class DatabaseService {
+  baseUrl = API_BASE_URL; // Added baseUrl property
+
   static async initializeDatabase() {
     try {
       const response = await axios.get(`${API_BASE_URL}/health`);
@@ -44,9 +46,9 @@ export class DatabaseService {
     }
   }
 
-  static async saveAttendance(eventId, attendance) {
+  static async saveAttendance(eventId: string, attendance: any): Promise<void> { // Added any type for attendance
     try {
-      const response = await axios.post(`${API_BASE_URL}/events/${eventId}/attendances`, attendance);
+      const response = await axios.post(`${this.baseUrl}/api/events/${eventId}/attendances`, attendance);
       return response.data;
     } catch (error) {
       console.error('Save attendance error:', error);

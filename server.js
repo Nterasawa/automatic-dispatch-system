@@ -68,6 +68,7 @@ app.post('/api/events/:eventId/attendances', async (req, res) => {
   try {
     const { eventId } = req.params;
     const attendance = req.body;
+    await fs.mkdir(DATA_DIR, { recursive: true });
     const attendancesFile = path.join(DATA_DIR, `attendances_${eventId}.json`);
     let attendances = [];
     try {
