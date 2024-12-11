@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { Event } from '../types/event';
 
-const API_BASE_URL = '/api';
+const API_BASE_URL = 'http://0.0.0.0:3000/api';
 
 export class DatabaseService {
   baseUrl = API_BASE_URL; // Added baseUrl property
