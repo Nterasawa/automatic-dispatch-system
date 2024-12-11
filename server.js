@@ -1,4 +1,3 @@
-
 import express from 'express';
 import cors from 'cors';
 import { promises as fs } from 'fs';
@@ -64,22 +63,22 @@ app.post('/api/events/:eventId/attendances', async (req, res) => {
   try {
     const { eventId } = req.params;
     const attendanceData = req.body;
-    const attendancesPath = path.join(DATA_DIR, `${eventId}_attendances.json`);
-    
+    const attendancePath = path.join(DATA_DIR, `attendance_${eventId}.json`);
+
     let attendances = [];
     try {
-      const data = await fs.readFile(attendancesPath, 'utf8');
+      const data = await fs.readFile(attendancePath, 'utf8');
       attendances = JSON.parse(data);
     } catch (error) {
-      // ファイルが存在しない場合は空の配列を使用
+      // ファイルが存在しない場合は新規作成
     }
-    
+
     attendances.push(attendanceData);
-    await fs.writeFile(attendancesPath, JSON.stringify(attendances, null, 2));
-    res.json(attendanceData);
+    await fs.writeFile(attendancePath, JSON.stringify(attendances, null, 2));
+    res.status(201).json(attendanceData);
   } catch (error) {
-    console.error('出欠保存エラー:', error);
-    res.status(500).json({ error: '出欠の保存に失敗しました' });
+    console.error('Attendance save error:', error);
+    res.status(500).json({ error: true, message: '出欠の保存に失敗しました' });
   }
 });
 
@@ -87,20 +86,19 @@ app.post('/api/events/:eventId/attendances', async (req, res) => {
 app.get('/api/events/:eventId/attendances', async (req, res) => {
   try {
     const { eventId } = req.params;
-    const attendancesPath = path.join(DATA_DIR, `${eventId}_attendances.json`);
-    
+    const attendancePath = path.join(DATA_DIR, `attendance_${eventId}.json`);
+
     let attendances = [];
     try {
-      const data = await fs.readFile(attendancesPath, 'utf8');
+      const data = await fs.readFile(attendancePath, 'utf8');
       attendances = JSON.parse(data);
     } catch (error) {
-      // ファイルが存在しない場合は空の配列を返す
+      // ファイルが存在しない場合は空配列を返す
     }
-    
+
     res.json(attendances);
   } catch (error) {
-    console.error('出欠取得エラー:', error);
-    res.status(500).json({ error: '出欠の取得に失敗しました' });
+    res.status(500).json({ error: true, message: '出欠の取得に失敗しました' });
   }
 });
 
