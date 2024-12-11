@@ -1,7 +1,7 @@
 
-import express from 'express';
-import cors from 'cors';
-import { Database } from '@replit/database';
+const express = require('express');
+const cors = require('cors');
+const Database = require('@replit/database');
 
 const app = express();
 const db = new Database();
@@ -18,6 +18,7 @@ app.get('/api/events', async (req, res) => {
     const events = await db.get('events') || [];
     res.json(events);
   } catch (error) {
+    console.error('Get events error:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -25,10 +26,15 @@ app.get('/api/events', async (req, res) => {
 app.post('/api/events', async (req, res) => {
   try {
     const events = await db.get('events') || [];
-    events.push(req.body);
+    const newEvent = {
+      ...req.body,
+      id: `event-${Date.now()}`
+    };
+    events.push(newEvent);
     await db.set('events', events);
-    res.json(req.body);
+    res.status(201).json(newEvent);
   } catch (error) {
+    console.error('Create event error:', error);
     res.status(500).json({ error: error.message });
   }
 });
