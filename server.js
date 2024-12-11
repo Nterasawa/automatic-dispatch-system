@@ -48,6 +48,41 @@ app.get('/api/events', async (req, res) => {
   }
 });
 
+// Attendance endpoints
+app.get('/api/events/:eventId/attendances', async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const attendancesFile = path.join(DATA_DIR, `attendances_${eventId}.json`);
+    try {
+      const data = await fs.readFile(attendancesFile, 'utf8');
+      res.json(JSON.parse(data));
+    } catch {
+      res.json([]);
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/events/:eventId/attendances', async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const attendance = req.body;
+    const attendancesFile = path.join(DATA_DIR, `attendances_${eventId}.json`);
+    let attendances = [];
+    try {
+      const data = await fs.readFile(attendancesFile, 'utf8');
+      attendances = JSON.parse(data);
+    } catch {}
+    attendances.push(attendance);
+    await fs.writeFile(attendancesFile, JSON.stringify(attendances, null, 2));
+    res.status(201).json(attendance);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+
 app.post('/api/events', async (req, res) => {
   try {
     const event = req.body;
