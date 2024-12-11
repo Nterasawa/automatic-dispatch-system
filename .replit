@@ -1,35 +1,10 @@
-run = "npm run dev"
-modules = ["nodejs-20"]
-hidden = [".config", "tsconfig.json", "tsconfig.node.json", "vite.config.js", ".gitignore"]
-entrypoint = "src/App.tsx"
+
+run = "npm run dev & node server.js"
+entrypoint = "server.js"
 
 [nix]
-channel = "stable-24_05"
-
-[unitTest]
-language = "nodejs"
+channel = "stable-22_11"
 
 [deployment]
-deploymentTarget = "static"
-build = ["npm", "run", "build"]
-publicDir = "dist"
-
-[[ports]]
-localPort = 3001
-externalPort = 3001
-
-[[ports]]
-localPort = 5173
-externalPort = 80
-
-[[ports]]
-localPort = 5174
-externalPort = 3000
-
-[[ports]]
-localPort = 5175
-externalPort = 3002
-
-[[ports]]
-localPort = 5176
-externalPort = 3003
+run = ["node", "server.js"]
+deploymentTarget = "cloudrun"

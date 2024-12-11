@@ -1,8 +1,9 @@
 
 const express = require('express');
 const cors = require('cors');
+const crypto = require('crypto');
 const app = express();
-const port = 3001;
+const port = 3000;
 
 let events = [];
 

@@ -1,4 +1,3 @@
-
 import { Event } from '../types/event';
 import { AttendanceData } from '../types/attendance';
 
