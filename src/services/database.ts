@@ -1,30 +1,22 @@
 
 import { Event } from '../types/event';
 import { AttendanceData } from '../types/attendance';
-import fs from 'fs/promises';
-
-const DB_PATH = './data/events.json';
 
 export class DatabaseService {
   static async initializeDatabase() {
     try {
-      try {
-        await fs.access(DB_PATH);
-      } catch {
-        await fs.mkdir('./data', { recursive: true });
-        await fs.writeFile(DB_PATH, JSON.stringify([], null, 2));
-      }
-      return { status: 'success' };
+      const response = await fetch('/api/health');
+      return await response.json();
     } catch (error) {
-      console.error('Database initialization error details:', error);
+      console.error('Database initialization error:', error);
       throw error;
     }
   }
 
   static async getEvents(): Promise<Event[]> {
     try {
-      const data = await fs.readFile(DB_PATH, 'utf-8');
-      return JSON.parse(data);
+      const response = await fetch('/api/events');
+      return await response.json();
     } catch (error) {
       console.error('Get events error:', error);
       return [];
@@ -33,9 +25,16 @@ export class DatabaseService {
 
   static async saveEvent(event: Event): Promise<void> {
     try {
-      const events = await this.getEvents();
-      events.push(event);
-      await fs.writeFile(DB_PATH, JSON.stringify(events, null, 2));
+      const response = await fetch('/api/events', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(event),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to save event');
+      }
     } catch (error) {
       console.error('Save event error:', error);
       throw error;
@@ -44,9 +43,12 @@ export class DatabaseService {
 
   static async deleteEvent(id: string): Promise<void> {
     try {
-      const events = await this.getEvents();
-      const filteredEvents = events.filter(event => event.id !== id);
-      await fs.writeFile(DB_PATH, JSON.stringify(filteredEvents, null, 2));
+      const response = await fetch(`/api/events/${id}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) {
+        throw new Error('Failed to delete event');
+      }
     } catch (error) {
       console.error('Delete event error:', error);
       throw error;

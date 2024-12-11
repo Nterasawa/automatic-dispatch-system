@@ -1,16 +1,16 @@
 
 const express = require('express');
-const cors = require('cors');
+const fs = require('fs/promises');
 const path = require('path');
-const fs = require('fs').promises;
+const cors = require('cors');
 
 const app = express();
-const DATA_DIR = path.join(__dirname, 'data');
+const DATA_DIR = './data';
 const EVENTS_FILE = path.join(DATA_DIR, 'events.json');
 
-app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'dist')));
+app.use(cors());
+app.use(express.static('dist'));
 
 const initDataDir = async () => {
   try {
@@ -25,7 +25,6 @@ const initDataDir = async () => {
   }
 };
 
-// API routes
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
 });
@@ -54,14 +53,25 @@ app.post('/api/events', async (req, res) => {
   }
 });
 
-// Serve index.html for all other routes
+app.delete('/api/events/:id', async (req, res) => {
+  try {
+    const data = await fs.readFile(EVENTS_FILE, 'utf8');
+    const events = JSON.parse(data);
+    const filteredEvents = events.filter(event => event.id !== req.params.id);
+    await fs.writeFile(EVENTS_FILE, JSON.stringify(filteredEvents, null, 2));
+    res.status(200).json({ message: 'Event deleted' });
+  } catch (error) {
+    console.error('Delete event error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
 initDataDir().then(() => {
-  const PORT = 3000;
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server running on port ${PORT}`);
+  app.listen(3000, '0.0.0.0', () => {
+    console.log('Server running on port 3000');
   });
 });
