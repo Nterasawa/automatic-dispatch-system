@@ -5,7 +5,7 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "start": "node server.js",
+    "start": "node src/server/index.mjs",
     "dev": "concurrently \"npm run start\" \"vite\"",
     "build": "tsc && vite build",
     "preview": "vite preview"
