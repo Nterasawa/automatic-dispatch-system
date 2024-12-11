@@ -1,31 +1,30 @@
 
 const express = require('express');
 const cors = require('cors');
-const Client = require('@replit/database');
+const fs = require('fs').promises;
+const path = require('path');
 
 const app = express();
-const db = new Client();
+const dataFile = path.join(__dirname, 'data', 'events.json');
 
 app.use(cors());
 app.use(express.json());
 app.use(express.static('dist'));
 
-// データベース接続確認
-const checkDatabaseConnection = async () => {
+// データファイルの存在確認・作成
+const initializeDataFile = async () => {
   try {
-    await db.list();
-    console.log('Database connected successfully');
-    return true;
-  } catch (error) {
-    console.error('Database connection error:', error);
-    return false;
+    await fs.access(dataFile);
+  } catch {
+    await fs.mkdir(path.dirname(dataFile), { recursive: true });
+    await fs.writeFile(dataFile, JSON.stringify([]));
   }
 };
 
 app.get('/api/events', async (req, res) => {
   try {
-    const events = await db.get('events') || [];
-    res.json(events);
+    const data = await fs.readFile(dataFile, 'utf8');
+    res.json(JSON.parse(data));
   } catch (error) {
     console.error('Get events error:', error);
     res.status(500).json({ error: 'Failed to fetch events' });
@@ -34,10 +33,11 @@ app.get('/api/events', async (req, res) => {
 
 app.post('/api/events', async (req, res) => {
   try {
-    const events = await db.get('events') || [];
+    const data = await fs.readFile(dataFile, 'utf8');
+    const events = JSON.parse(data);
     const event = req.body;
     events.push(event);
-    await db.set('events', events);
+    await fs.writeFile(dataFile, JSON.stringify(events, null, 2));
     res.json(event);
   } catch (error) {
     console.error('Save event error:', error);
@@ -47,9 +47,10 @@ app.post('/api/events', async (req, res) => {
 
 app.delete('/api/events/:id', async (req, res) => {
   try {
-    const events = await db.get('events') || [];
+    const data = await fs.readFile(dataFile, 'utf8');
+    const events = JSON.parse(data);
     const filteredEvents = events.filter(event => event.id !== req.params.id);
-    await db.set('events', filteredEvents);
+    await fs.writeFile(dataFile, JSON.stringify(filteredEvents, null, 2));
     res.json({ success: true });
   } catch (error) {
     console.error('Delete event error:', error);
@@ -59,13 +60,11 @@ app.delete('/api/events/:id', async (req, res) => {
 
 const port = 3000;
 
-// サーバー起動前にデータベース接続を確認
-checkDatabaseConnection().then((isConnected) => {
-  if (isConnected) {
-    app.listen(port, '0.0.0.0', () => {
-      console.log(`Server running on port ${port}`);
-    });
-  } else {
-    console.error('Failed to start server due to database connection error');
-  }
+// サーバー起動前にデータファイルを初期化
+initializeDataFile().then(() => {
+  app.listen(port, '0.0.0.0', () => {
+    console.log(`Server running on port ${port}`);
+  });
+}).catch(error => {
+  console.error('Failed to initialize data file:', error);
 });
