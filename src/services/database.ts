@@ -4,15 +4,22 @@ import { AttendanceData } from '../types/attendance';
 import fs from 'fs/promises';
 import path from 'path';
 
-const DB_PATH = './data/events.json';
+const DB_PATH = path.join(process.cwd(), 'data', 'events.json');
 
 export class DatabaseService {
   static async initializeDatabase() {
     try {
-      await fs.access(DB_PATH);
-    } catch {
-      await fs.mkdir(path.dirname(DB_PATH), { recursive: true });
-      await fs.writeFile(DB_PATH, JSON.stringify([]));
+      const dirPath = path.dirname(DB_PATH);
+      await fs.mkdir(dirPath, { recursive: true });
+      try {
+        await fs.access(DB_PATH);
+      } catch {
+        await fs.writeFile(DB_PATH, JSON.stringify([], null, 2), { mode: 0o666 });
+      }
+      return { status: 'success' };
+    } catch (error) {
+      console.error('Database initialization error details:', error);
+      throw error;
     }
   }
 
