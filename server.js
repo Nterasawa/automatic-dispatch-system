@@ -5,21 +5,35 @@ const fs = require('fs').promises;
 const path = require('path');
 
 const app = express();
-const dataFile = path.join(__dirname, 'data', 'events.json');
+const dataFile = path.join(process.env.DATA_DIR || '/tmp/eagles-data', 'events.json');
 
 app.use(cors());
 app.use(express.json());
 app.use(express.static('dist'));
 
-// データファイルの存在確認・作成
 const initializeDataFile = async () => {
   try {
-    await fs.access(dataFile);
-  } catch {
     await fs.mkdir(path.dirname(dataFile), { recursive: true });
-    await fs.writeFile(dataFile, JSON.stringify([]));
+    try {
+      await fs.access(dataFile);
+    } catch {
+      await fs.writeFile(dataFile, '[]', 'utf8');
+    }
+    return true;
+  } catch (error) {
+    console.error('Storage initialization failed:', error);
+    return false;
   }
 };
+
+app.get('/api/health', async (req, res) => {
+  try {
+    await fs.access(dataFile);
+    res.json({ status: 'ok' });
+  } catch (error) {
+    res.status(500).json({ error: 'Storage not accessible' });
+  }
+});
 
 app.get('/api/events', async (req, res) => {
   try {
@@ -60,11 +74,13 @@ app.delete('/api/events/:id', async (req, res) => {
 
 const port = 3000;
 
-// サーバー起動前にデータファイルを初期化
-initializeDataFile().then(() => {
-  app.listen(port, '0.0.0.0', () => {
-    console.log(`Server running on port ${port}`);
-  });
-}).catch(error => {
-  console.error('Failed to initialize data file:', error);
+initializeDataFile().then((success) => {
+  if (success) {
+    app.listen(port, '0.0.0.0', () => {
+      console.log(`Server running on port ${port}`);
+    });
+  } else {
+    console.error('Failed to initialize data storage');
+    process.exit(1);
+  }
 });
