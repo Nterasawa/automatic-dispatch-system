@@ -57,6 +57,9 @@ app.get('/api/events', async (req, res) => {
 
 app.post('/api/events', async (req, res) => {
   try {
+    // データディレクトリの存在確認と作成
+    await fs.mkdir(DATA_DIR, { recursive: true });
+    
     const event = req.body;
     if (!event || !event.title || !event.date) {
       return res.status(400).json({ error: 'イベントデータが不正です' });
@@ -64,16 +67,26 @@ app.post('/api/events', async (req, res) => {
 
     let events = [];
     try {
-      const data = await fs.readFile(DATA_FILE, 'utf8');
-      events = JSON.parse(data);
+      try {
+        const data = await fs.readFile(DATA_FILE, 'utf8');
+        events = JSON.parse(data);
+      } catch (error) {
+        // ファイルが存在しない場合は空配列で初期化
+        await fs.writeFile(DATA_FILE, '[]', 'utf8');
+      }
     } catch (error) {
-      console.error('Reading events file error:', error);
-      events = [];
+      console.error('Reading/initializing events file error:', error);
+      return res.status(500).json({ error: 'イベントファイルの読み込みに失敗しました' });
     }
 
     events.push(event);
-    await fs.writeFile(DATA_FILE, JSON.stringify(events, null, 2), 'utf8');
-    res.status(201).json(event);
+    try {
+      await fs.writeFile(DATA_FILE, JSON.stringify(events, null, 2), 'utf8');
+      res.status(201).json(event);
+    } catch (error) {
+      console.error('Writing event file error:', error);
+      res.status(500).json({ error: 'イベントの保存に失敗しました' });
+    }
   } catch (error) {
     console.error('Save event error:', error);
     res.status(500).json({ error: 'イベントの保存に失敗しました' });
