@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { RoleSection } from "./RoleSection";
@@ -38,6 +37,18 @@ export const AttendanceForm: React.FC = () => {
     setNotes,
   } = useAttendanceForm();
 
+  const formData = {
+    role,
+    memberName: name,
+    status,
+    canDrive,
+    availableSeats,
+    familyPassengers,
+    needsOnigiri,
+    needsCarArrangement: wantsCar,
+    notes,
+  };
+
   const setFormData = (newData: any) => {
     if ("role" in newData) setRole(newData.role);
     if ("memberName" in newData) setName(newData.memberName);
@@ -54,30 +65,33 @@ export const AttendanceForm: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!eventId) return;
 
     try {
-      if (!eventId) return;
-
       const attendanceData = {
-        id: attendanceId || crypto.randomUUID(),
+        id: isEditMode ? attendanceId! : crypto.randomUUID(),
         eventId,
-        role,
-        memberName: name,
-        status,
-        canDrive,
-        availableSeats,
-        familyPassengers,
-        needsOnigiri,
-        needsCarArrangement: wantsCar,
-        notes,
+        role: formData.role,
+        memberName: formData.memberName,
+        status: formData.status,
+        canDrive: formData.canDrive,
+        availableSeats: formData.availableSeats,
+        familyPassengers: formData.familyPassengers,
+        needsOnigiri:
+          formData.role === "コーチ" ? formData.needsOnigiri : undefined,
+        needsCarArrangement:
+          formData.role === "コーチ" ? formData.needsCarArrangement : undefined,
+        notes: formData.notes,
         timestamp: new Date().toISOString(),
       };
 
       if (isEditMode && attendanceId) {
+        // 既存のデータを削除
         await DatabaseService.deleteAttendance(eventId, attendanceId);
       }
+      // 新しいデータを保存
       await DatabaseService.saveAttendance(eventId, attendanceData);
-      navigate("/completion?mode=update");
+      navigate("/completion?mode=update"); // 更新モードを指定
     } catch (error) {
       console.error("出欠登録エラー:", error);
       alert("保存に失敗しました。もう一度お試しください。");
@@ -110,17 +124,17 @@ export const AttendanceForm: React.FC = () => {
       <div className="max-w-2xl mx-auto w-full p-4">
         <div className="bg-white rounded-lg shadow-md p-6">
           <form onSubmit={handleSubmit} className="space-y-6">
-            <RoleSection formData={{ role }} setFormData={setFormData} />
-            <MemberInfoSection formData={{ memberName: name }} setFormData={setFormData} />
-            <AttendanceSection formData={{ status }} setFormData={setFormData} />
-            {status === "○" && (
-              <TransportSection formData={{ canDrive, availableSeats, familyPassengers, needsCarArrangement: wantsCar }} setFormData={setFormData} />
+            <RoleSection formData={formData} setFormData={setFormData} />
+            <MemberInfoSection formData={formData} setFormData={setFormData} />
+            <AttendanceSection formData={formData} setFormData={setFormData} />
+            {formData.status === "○" && (
+              <TransportSection formData={formData} setFormData={setFormData} />
             )}
-            {role === "コーチ" && (
-              <CoachSection formData={{ needsOnigiri }} setFormData={setFormData} />
+            {formData.role === "コーチ" && (
+              <CoachSection formData={formData} setFormData={setFormData} />
             )}
             <NotesSection
-              formData={{ notes }}
+              formData={formData}
               setFormData={setFormData}
               charCount={charCount}
             />

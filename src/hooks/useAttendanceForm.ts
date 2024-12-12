@@ -1,14 +1,24 @@
-
 import { useState, useEffect } from "react";
-import { useParams, useSearchParams, useNavigate } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { DatabaseService } from "../services/database";
+
+type AttendanceFormState = {
+  role: "団員" | "コーチ" | undefined;
+  memberName: string;
+  status: "○" | "×" | undefined;
+  canDrive: "○" | "×" | undefined;
+  availableSeats: number;
+  familyPassengers: number;
+  needsOnigiri: "必要" | "不要" | undefined;
+  needsCarArrangement: "○" | "×" | undefined;
+  notes: string;
+};
 
 export const useAttendanceForm = () => {
   const { eventId } = useParams();
   const [searchParams] = useSearchParams();
   const attendanceId = searchParams.get("attendanceId");
   const isEditMode = searchParams.get("mode") === "edit";
-  const navigate = useNavigate();
 
   const [event, setEvent] = useState<any>(null);
   const [role, setRole] = useState<"団員" | "コーチ" | undefined>(undefined);
@@ -17,7 +27,9 @@ export const useAttendanceForm = () => {
   const [canDrive, setCanDrive] = useState<"○" | "×" | undefined>(undefined);
   const [availableSeats, setAvailableSeats] = useState(0);
   const [familyPassengers, setFamilyPassengers] = useState(0);
-  const [needsOnigiri, setNeedsOnigiri] = useState<"必要" | "不要" | undefined>(undefined);
+  const [needsOnigiri, setNeedsOnigiri] = useState<"必要" | "不要" | undefined>(
+    undefined,
+  );
   const [wantsCar, setWantsCar] = useState<"○" | "×" | undefined>(undefined);
   const [notes, setNotes] = useState("");
 
@@ -42,8 +54,12 @@ export const useAttendanceForm = () => {
             setCanDrive(attendance.canDrive as "○" | "×");
             setAvailableSeats(attendance.availableSeats);
             setFamilyPassengers(attendance.familyPassengers);
-            setNeedsOnigiri(attendance.needsOnigiri as "必要" | "不要" | undefined);
-            setWantsCar(attendance.needsCarArrangement as "○" | "×" | undefined);
+            setNeedsOnigiri(
+              attendance.needsOnigiri as "必要" | "不要" | undefined,
+            );
+            setWantsCar(
+              attendance.needsCarArrangement as "○" | "×" | undefined,
+            );
             setNotes(attendance.notes);
           }
         }
@@ -54,37 +70,6 @@ export const useAttendanceForm = () => {
 
     fetchData();
   }, [eventId, attendanceId, isEditMode]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!eventId) return;
-
-    try {
-      const attendanceData = {
-        id: attendanceId || crypto.randomUUID(),
-        eventId,
-        role,
-        memberName: name,
-        status,
-        canDrive,
-        availableSeats: parseInt(availableSeats.toString()),
-        familyPassengers: parseInt(familyPassengers.toString()),
-        needsOnigiri,
-        needsCarArrangement: wantsCar,
-        notes,
-        timestamp: new Date().toISOString(),
-      };
-
-      if (isEditMode && attendanceId) {
-        await DatabaseService.updateAttendance(eventId, attendanceId, attendanceData);
-      } else {
-        await DatabaseService.saveAttendance(eventId, attendanceData);
-      }
-      navigate("/completion?mode=update");
-    } catch (error) {
-      console.error("データ保存エラー:", error);
-    }
-  };
 
   return {
     event,
@@ -109,6 +94,5 @@ export const useAttendanceForm = () => {
     setWantsCar,
     notes,
     setNotes,
-    handleSubmit,
   };
 };
